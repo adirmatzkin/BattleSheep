@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "420638641760",
+    "firebase_url": "https://battlesheep-1c7b8.firebaseio.com",
+    "project_id": "battlesheep-1c7b8",
+    "storage_bucket": "battlesheep-1c7b8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:420638641760:android:1b8f6d041d3f29a1",
+        "android_client_info": {
+          "package_name": "com.example.user.battlesheep"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "420638641760-s0veeddsvee1bddd97l8d0e65gq3orit.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.user.battlesheep",
+            "certificate_hash": "13329EB0218D0DB1B1637318CA0DF53EF85ABBFC"
+          }
+        },
+        {
+          "client_id": "420638641760-60kj8jb88ep1e7k632p37tuk1bpp1epq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.user.battlesheep",
+            "certificate_hash": "BB2799653C4DDD3C41FDF831580DA1CC53AA529D"
+          }
+        },
+        {
+          "client_id": "420638641760-t2qrhoqbngl48t1hnsiv25nli1lvqnfk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4JZD0dHJcDTmBKJHrdV4UcvYwVhbXvq0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "420638641760-t2qrhoqbngl48t1hnsiv25nli1lvqnfk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
