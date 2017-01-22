@@ -25,6 +25,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private FirebaseAuth mAuth;
     private FirebaseDatabase mFirebase;
+    private LocationManager locationManager;
+
+    Thread t;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +42,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mAuth = FirebaseAuth.getInstance();
         mFirebase = FirebaseDatabase.getInstance();
 
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        LocationListener locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+                t.start();
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+                t.stop();
+            }
+        };
     }
 
 
@@ -65,7 +91,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            final LocationManager locationManager = (LocationManager) MapsActivity.this.getSystemService(Context.LOCATION_SERVICE);
                             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                                 Criteria c = new Criteria();
                                 c.setAccuracy(Criteria.ACCURACY_LOW);
@@ -112,7 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         };
-        Thread t = new Thread(r);
+        t = new Thread(r);
         t.start();
     }
 }
