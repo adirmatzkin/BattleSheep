@@ -110,7 +110,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     // for ActivityCompat#requestPermissions for more details.
                                     return;
                                 }
-                                if(locationManager.getAllProviders().size() > 0) {
+                                if(locationManager.getAllProviders().size() > 0 && locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)) != null) {
                                     double lat = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLatitude();
                                     double longt = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLongitude();
 
