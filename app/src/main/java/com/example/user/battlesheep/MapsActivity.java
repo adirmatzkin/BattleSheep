@@ -2,6 +2,7 @@ package com.example.user.battlesheep;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -51,54 +52,67 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        final LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
         mMap = googleMap;
+        runThread();
+    }
 
+    private void runThread() {
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                while (true)
+                {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            final LocationManager locationManager = (LocationManager) MapsActivity.this.getSystemService(Context.LOCATION_SERVICE);
+                            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                                Criteria c = new Criteria();
+                                c.setAccuracy(Criteria.ACCURACY_LOW);
+                                c.setAltitudeRequired(false);
+                                c.setBearingRequired(false);
+                                c.setCostAllowed(false);
+                                c.setPowerRequirement(Criteria.NO_REQUIREMENT);
+                                c.setSpeedRequired(false);
 
-        LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                Toast.makeText(getApplicationContext(), "sdgaskjgdl", Toast.LENGTH_SHORT).show();
+                                if (ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                    // TODO: Consider calling
+                                    //    ActivityCompat#requestPermissions
+                                    // here to request the missing permissions, and then overriding
+                                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                    //                                          int[] grantResults)
+                                    // to handle the case where the user grants the permission. See the documentation
+                                    // for ActivityCompat#requestPermissions for more details.
+                                    return;
+                                }
+                                if(locationManager.getAllProviders().size() > 0) {
+                                    double lat = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLatitude();
+                                    double longt = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLongitude();
 
-                // Called when a new location is found by the network location provider.
-                if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    try{
+                                    mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("lat").setValue(lat + "");
+                                    mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("long").setValue(longt + "");
 
-                        mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("lat").setValue(location.getLatitude() + "");
-                        mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("long").setValue(location.getLongitude() + "");
-                        LatLng myLoc = new LatLng(location.getLatitude(), location.getLongitude());
-                        mMap.addMarker(new MarkerOptions().position(myLoc).title("My location"));
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
-                    }finally {
+                                    LatLng myLoc = new LatLng(lat, longt);
+                                    mMap.clear();
+                                    mMap.addMarker(new MarkerOptions().position(myLoc).title("My location"));
+                                    Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
+                                    mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
+                                }
+                            }
+                        }
 
+                    });
+
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        Toast.makeText(getApplicationContext(), "Cant sleep", Toast.LENGTH_SHORT).show();
+                        break;
                     }
-
                 }
             }
-
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-            }
-
-            public void onProviderEnabled(String provider) {
-            }
-
-            public void onProviderDisabled(String provider) {
-                Toast.makeText(getApplicationContext(), "Please enable your GPS", Toast.LENGTH_SHORT).show();
-            }
         };
-        // Add a marker in Sydney and move the camera
-
-        // Register the listener with the Location Manager to receive location updates
-        if (!(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-        }
-
+        Thread t = new Thread(r);
+        t.start();
     }
 }
