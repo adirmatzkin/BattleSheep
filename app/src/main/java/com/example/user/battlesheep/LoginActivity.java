@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.multidex.MultiDex;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -16,7 +15,11 @@ import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
@@ -47,7 +50,6 @@ public class LoginActivity extends AppCompatActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        MultiDex.install(this);
         FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_login);
 
@@ -99,25 +101,26 @@ public class LoginActivity extends AppCompatActivity{
         }
 
 /// Initialize Facebook Login button
-//        mCallbackManager = CallbackManager.Factory.create();
-//        LoginButton loginButton = (LoginButton) findViewById(R.id.button_facebook_login);
-//        loginButton.setReadPermissions("email", "public_profile");
-//        loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
-//            @Override
-//            public void onSuccess(LoginResult loginResult) {
-//                handleFacebookAccessToken(loginResult.getAccessToken());
-//            }
-//
-//            @Override
-//            public void onCancel() {
-//                // ...
-//            }
-//
-//            @Override
-//            public void onError(FacebookException error) {
-//                // ...
-//            }
-//        });
+        mCallbackManager = CallbackManager.Factory.create();
+        LoginButton loginButton = (LoginButton) findViewById(R.id.button_facebook_login);
+        loginButton.setReadPermissions("email", "public_profile");
+        loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                handleFacebookAccessToken(loginResult.getAccessToken());
+                startActivity(new Intent(LoginActivity.this, MapsActivity.class));
+            }
+
+            @Override
+            public void onCancel() {
+                // ...
+            }
+
+            @Override
+            public void onError(FacebookException error) {
+                // ...
+            }
+        });
 
 // ...
 
