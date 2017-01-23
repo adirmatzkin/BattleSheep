@@ -19,4 +19,13 @@
     <string name="title_activity_maps">Map</string>
     <string name="facebook_app_id">1800816453505400</string>
 
+
+    <!-- Strings related to navigation drawer -->
+    <string name="title_activity_menu">Menu</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+
 </resources>

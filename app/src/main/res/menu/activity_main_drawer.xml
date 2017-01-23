@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_whos_layout"
+            android:title="Who's Around Me?" />
+        <item
+            android:id="@+id/nav_map_layout"
+            android:title="My Map" />
+        <item
+            android:id="@+id/nav_nfc_layout"
+            android:title="NFC Adding" />
+    </group>
+
+    <item android:title="Communicate">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:title="Share" />
+        </menu>
+    </item>
+
+</menu>

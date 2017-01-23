@@ -108,7 +108,7 @@ public class LoginActivity extends AppCompatActivity{
             @Override
             public void onSuccess(LoginResult loginResult) {
                 handleFacebookAccessToken(loginResult.getAccessToken());
-                startActivity(new Intent(LoginActivity.this, MapsActivity.class));
+                startActivity(new Intent(LoginActivity.this, Menu.class));
             }
 
             @Override
@@ -166,7 +166,7 @@ public class LoginActivity extends AppCompatActivity{
                                 editor.putBoolean("Remember", rememberBox.isChecked());
                                 editor.commit();
                             }
-                            startActivity(new Intent(LoginActivity.this, MapsActivity.class));
+                            startActivity(new Intent(LoginActivity.this, Menu.class));
                         }
                     }
                 });
