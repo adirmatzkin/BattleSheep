@@ -17,4 +17,6 @@
     <string name="signup">SignUp</string>
     <string name="page_not_available">היי זה משהו שנעבוד עליו\u200e</string>
     <string name="title_activity_maps">Map</string>
+    <string name="facebook_app_id">1800816453505400</string>
+
 </resources>
