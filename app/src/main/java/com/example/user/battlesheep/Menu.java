@@ -19,10 +19,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
+import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.maps.MapFragment;
 import com.google.firebase.auth.FacebookAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
 
 import static com.example.user.battlesheep.R.id.rememberBox;
 import static com.example.user.battlesheep.R.id.start;
@@ -33,10 +35,14 @@ public class Menu extends AppCompatActivity
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
 
+    private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mAuth = FirebaseAuth.getInstance();
 
         sharedPref = getApplicationContext().getSharedPreferences("com.example.myapp.PREFERENCE_FILE_KEY", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
@@ -121,7 +127,14 @@ public class Menu extends AppCompatActivity
             editor.putString("Password", "");
             editor.putBoolean("Remember", false);
             editor.commit();
-            LoginManager.getInstance().logOut();
+            if(isFacebookLoggedIn())
+            {
+                LoginManager.getInstance().logOut();
+            }
+            else
+            {
+                mAuth.signOut();
+            }
             startActivity(new Intent(Menu.this, LoginActivity.class));
         }
 
@@ -248,5 +261,9 @@ public class Menu extends AppCompatActivity
     @Override
     public void setQwertyMode(boolean isQwerty) {
 
+    }
+
+    public boolean isFacebookLoggedIn(){
+        return AccessToken.getCurrentAccessToken() != null;
     }
 }
