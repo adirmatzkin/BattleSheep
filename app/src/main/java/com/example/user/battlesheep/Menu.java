@@ -2,7 +2,9 @@ package com.example.user.battlesheep;
 
 import android.app.FragmentManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -17,15 +19,28 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
+import com.facebook.FacebookSdk;
+import com.facebook.login.LoginManager;
 import com.google.android.gms.maps.MapFragment;
+import com.google.firebase.auth.FacebookAuthProvider;
+
+import static com.example.user.battlesheep.R.id.rememberBox;
+import static com.example.user.battlesheep.R.id.start;
 
 public class Menu extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, android.view.Menu {
+
+    private SharedPreferences sharedPref;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sharedPref = getApplicationContext().getSharedPreferences("com.example.myapp.PREFERENCE_FILE_KEY", Context.MODE_PRIVATE);
+        editor = sharedPref.edit();
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
 
@@ -93,10 +108,7 @@ public class Menu extends AppCompatActivity
                             , new WhosAroundFragment())
                     .commit();
         } else if (id == R.id.nav_map_layout) {
-            fragmentManager.beginTransaction()
-                    .replace(R.id.content_frame
-                            , new MapFragment())
-                    .commit();
+            startActivity(new Intent(Menu.this, MapsActivity.class));
         } else if (id == R.id.nav_nfc_layout) {
             fragmentManager.beginTransaction()
                     .replace(R.id.content_frame
@@ -104,6 +116,13 @@ public class Menu extends AppCompatActivity
                     .commit();
         } else if (id == R.id.nav_share) {
             // do nothing for now..
+        } else if (id == R.id.nav_logout) {
+            editor.putString("Email", "");
+            editor.putString("Password", "");
+            editor.putBoolean("Remember", false);
+            editor.commit();
+            LoginManager.getInstance().logOut();
+            startActivity(new Intent(Menu.this, LoginActivity.class));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

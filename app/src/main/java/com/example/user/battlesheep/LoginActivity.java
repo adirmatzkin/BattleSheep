@@ -18,6 +18,7 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -122,10 +123,10 @@ public class LoginActivity extends AppCompatActivity{
             }
         });
 
-// ...
-
-
-
+        if(isFacebookLoggedIn())
+        {
+            startActivity(new Intent(LoginActivity.this, Menu.class));
+        }
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -206,6 +207,10 @@ public class LoginActivity extends AppCompatActivity{
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
+    }
+
+    public boolean isFacebookLoggedIn(){
+        return AccessToken.getCurrentAccessToken() != null;
     }
 }
 
