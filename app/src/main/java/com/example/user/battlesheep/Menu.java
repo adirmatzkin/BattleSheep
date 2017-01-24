@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.SubMenu;
 import android.view.View;
@@ -21,10 +22,17 @@ import android.view.MenuItem;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.internal.ImageRequest;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.maps.MapFragment;
 import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import static com.example.user.battlesheep.R.id.rememberBox;
 import static com.example.user.battlesheep.R.id.start;
@@ -36,12 +44,16 @@ public class Menu extends AppCompatActivity
     private SharedPreferences.Editor editor;
 
     private FirebaseAuth mAuth;
+    private FirebaseDatabase mDatabase;
+
+    String name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mDatabase = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
         sharedPref = getApplicationContext().getSharedPreferences("com.example.myapp.PREFERENCE_FILE_KEY", Context.MODE_PRIVATE);
@@ -67,6 +79,29 @@ public class Menu extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        if(isFacebookLoggedIn())
+        {
+            name = "";
+            GraphRequest request = GraphRequest.newMeRequest(
+                    AccessToken.getCurrentAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                        @Override
+                        public void onCompleted(JSONObject me, GraphResponse response) {
+                            if (AccessToken.getCurrentAccessToken() != null) {
+                                if (me != null) {
+                                    try {
+                                        name = response.getJSONObject().getString("name");
+                                        mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Name").setValue(name);
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                }
+                            }
+                        }
+                    });
+            GraphRequest.executeBatchAsync(request);
+        }
     }
 
     @Override
