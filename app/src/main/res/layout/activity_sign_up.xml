@@ -46,6 +46,14 @@
                 android:id="@+id/passwordUp"
                 android:hint="Password" />
 
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:ems="10"
+                android:id="@+id/nameUp"
+                android:hint="Name" />
+
             <Button
                 android:id="@+id/email_sign_in_button"
                 style="?android:textAppearanceSmall"

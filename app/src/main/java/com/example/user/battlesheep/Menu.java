@@ -6,8 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.widget.TextViewCompat;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.SubMenu;
 import android.view.View;
@@ -18,11 +21,31 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
+import com.facebook.internal.GraphUtil;
+import com.facebook.internal.ImageRequest;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.maps.MapFragment;
 import com.google.firebase.auth.FacebookAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import static com.example.user.battlesheep.R.id.rememberBox;
 import static com.example.user.battlesheep.R.id.start;
@@ -33,10 +56,22 @@ public class Menu extends AppCompatActivity
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
 
+    private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
+
+    private FirebaseDatabase mDatabase;
+
+    private TextView navMail;
+
+    String name;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mDatabase = FirebaseDatabase.getInstance();
+        mAuth = FirebaseAuth.getInstance();
 
         sharedPref = getApplicationContext().getSharedPreferences("com.example.myapp.PREFERENCE_FILE_KEY", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
@@ -61,6 +96,74 @@ public class Menu extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        ////////////////////////////////////////////////////// Set name in database
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // User is signed in
+                    Toast.makeText(getApplicationContext(), "onAuthStateChanged:signed_in:" + user.getUid(), Toast.LENGTH_SHORT).show();
+                } else {
+                    // User is signed out
+                    System.out.print("onAuthStateChanged:signed_out");
+                }
+            }
+        };
+
+        if(mAuth.getCurrentUser() == null)// For some FUCKING reason thats the only way to fix the authentication.
+        {
+            startActivity(new Intent(Menu.this, Menu.class));
+        }
+
+        if(isFacebookLoggedIn())
+        {
+            name = "";
+
+            GraphRequest request = GraphRequest.newMeRequest(
+                    AccessToken.getCurrentAccessToken(),
+                    new GraphRequest.GraphJSONObjectCallback() {
+                        @Override
+                        public void onCompleted(
+                                JSONObject object,
+                                GraphResponse response) {
+                            // Application code
+                            try {
+                                if(mAuth.getCurrentUser() != null)
+                                {
+                                    //Sets the user's Facebook's id
+                                    mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("ID").setValue(object.getString("id"));
+                                    //Gets the user's name and sets it in the nav menu
+                                    String email = object.getString("email");
+                                    navMail = (TextView) findViewById(R.id.navMail);
+                                    navMail.setText(email);
+                                    //Gets the friends array
+                                    JSONArray friendsList = response.getJSONObject().getJSONObject("friends").getJSONArray("data");
+                                    for(int i = 0; i < friendsList.length(); i++)
+                                    {
+                                        //Adds the uid of the friend to the friends list by his Facebook id.
+                                        addUidByIDToFriends(friendsList.getJSONObject(i).getString("id"), mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Friends"));
+                                    }
+                                    //Sets the user's name in the database.
+                                    name = response.getJSONObject().getString("name");
+                                    mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Name").setValue(name);
+                                }
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+            Bundle parameters = new Bundle();
+            parameters.putString("fields", "id,name,email, friends");
+            request.setParameters(parameters);
+            request.executeAsync();
+        }
+        else
+        {
+            navMail.setText(mAuth.getCurrentUser().getEmail());
+        }
     }
 
     @Override
@@ -121,7 +224,11 @@ public class Menu extends AppCompatActivity
             editor.putString("Password", "");
             editor.putBoolean("Remember", false);
             editor.commit();
-            LoginManager.getInstance().logOut();
+            if(isFacebookLoggedIn())
+            {
+                LoginManager.getInstance().logOut();
+            }
+            mAuth.signOut();
             startActivity(new Intent(Menu.this, LoginActivity.class));
         }
 
@@ -248,5 +355,47 @@ public class Menu extends AppCompatActivity
     @Override
     public void setQwertyMode(boolean isQwerty) {
 
+    }
+
+    public boolean isFacebookLoggedIn(){
+        return AccessToken.getCurrentAccessToken() != null;
+    }
+
+    //Add a user Firebase id to a given database reference by his Facebook ID.
+    public void addUidByIDToFriends(final String id, final DatabaseReference friendsChild)
+    {
+        mDatabase.getReference().addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                //Loop to check which user has the given ID.
+                for(DataSnapshot d : dataSnapshot.getChildren())
+                {
+                    if(d.hasChild("ID"))
+                    {
+                        //If the user has that ID:
+                        if(d.child("ID").getValue().toString().equals(id))
+                        {
+                            boolean hasFriend = false;
+                            //Check if friend is already in the friends list.
+                            for(DataSnapshot ds : dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildren())
+                            {
+                                if(ds.getValue().toString().equals(d.getKey()))
+                                {
+                                    hasFriend = true;
+                                }
+                            }
+                            //Adds the friend to the list.
+                            if(!hasFriend)
+                                friendsChild.child(String.valueOf(dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildrenCount() + 1)).setValue(d.getKey());
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 }

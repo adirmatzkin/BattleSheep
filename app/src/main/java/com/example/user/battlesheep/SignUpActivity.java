@@ -15,6 +15,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * A login screen that offers login via email/password.
@@ -23,9 +24,12 @@ public class SignUpActivity extends AppCompatActivity{
 
     private EditText mEmailView;
     private EditText mPasswordView;
+    private EditText mNameView;
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+
+    private FirebaseDatabase mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +38,9 @@ public class SignUpActivity extends AppCompatActivity{
         // Set up the login form.
         mEmailView = (EditText) findViewById(R.id.emailUp);
         mPasswordView = (EditText) findViewById(R.id.passwordUp);
+        mNameView = (EditText) findViewById(R.id.nameUp);
 
+        mDatabase = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -60,7 +66,7 @@ public class SignUpActivity extends AppCompatActivity{
         });
     }
 
-    public void signup(String email, String password)
+    public void signup(final String email, String password)
     {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -71,12 +77,14 @@ public class SignUpActivity extends AppCompatActivity{
                         // If sign in fails, display a message to the user. If sign in succeeds
                         // the auth state listener will be notified and logic to handle the
                         // signed in user can be handled in the listener.
-                        if (!task.isSuccessful()) {
+                        if (!task.isSuccessful() || mNameView.getText().toString().equals("")) {
                             Toast.makeText(SignUpActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
                         }
                         else
                         {
+                            mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Name").setValue(mNameView.getText().toString());
+                            mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Email").setValue(email);
                             startActivity(new Intent(SignUpActivity.this, Menu.class));
                         }
                         // ...
