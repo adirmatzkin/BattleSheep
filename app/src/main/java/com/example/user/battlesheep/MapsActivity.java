@@ -26,6 +26,8 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.Map;
 
+import static android.R.attr.x;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -119,6 +121,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     // for ActivityCompat#requestPermissions for more details.
                                     return;
                                 }
+
+
                                 if(locationManager.getAllProviders().size() > 0 && locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)) != null) {
                                     double lat = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLatitude();
                                     double longt = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLongitude();
@@ -128,9 +132,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                                     LatLng myLoc = new LatLng(lat, longt);
                                     mMap.clear();
-                                    mMap.addMarker(new MarkerOptions().position(myLoc).title("My location"));
+
+                                    mMap.setMyLocationEnabled(true);
                                     Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
-                                    mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
+
+//                                    mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
 
                                     showFriends();
                                 }
