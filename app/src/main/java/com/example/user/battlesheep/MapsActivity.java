@@ -19,7 +19,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Map;
 
@@ -128,6 +131,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     mMap.addMarker(new MarkerOptions().position(myLoc).title("My location"));
                                     Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
                                     mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
+
+                                    showFriends();
                                 }
                             }
                         }
@@ -141,6 +146,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         break;
                     }
                 }
+            }
+
+            private void showFriends()
+            {
+                mFirebase.getReference().addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        DataSnapshot friends = dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends");
+                        for(DataSnapshot d : friends.getChildren())
+                        {
+                            DataSnapshot friend = dataSnapshot.child(d.getValue().toString());
+                            if(friend.hasChild("lat") && friend.hasChild("long"))
+                            {
+                                String name = friend.child("Name").getValue().toString();
+                                double lat = Double.parseDouble(friend.child("lat").getValue().toString());
+                                double longt = Double.parseDouble(friend.child("long").getValue().toString());
+
+                                LatLng myLoc = new LatLng(lat, longt);
+                                mMap.addMarker(new MarkerOptions().position(myLoc).title(name));
+                                Toast.makeText(getApplicationContext(), name + "'s" + "marker", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
             }
         };
         t = new Thread(r);
