@@ -19,6 +19,8 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
@@ -46,6 +48,8 @@ public class Menu extends AppCompatActivity
     private FirebaseAuth mAuth;
     private FirebaseDatabase mDatabase;
 
+    private TextView navMail = (EditText) findItem(R.id.navMail);
+
     String name;
 
     @Override
@@ -55,6 +59,8 @@ public class Menu extends AppCompatActivity
 
         mDatabase = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
+
+        navMail.setText(mAuth.getCurrentUser().getEmail());
 
         sharedPref = getApplicationContext().getSharedPreferences("com.example.myapp.PREFERENCE_FILE_KEY", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
