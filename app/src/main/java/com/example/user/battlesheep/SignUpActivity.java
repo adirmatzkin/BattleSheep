@@ -57,6 +57,7 @@ public class SignUpActivity extends AppCompatActivity{
             }
         };
 
+
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -66,7 +67,7 @@ public class SignUpActivity extends AppCompatActivity{
         });
     }
 
-    public void signup(String email, String password)
+    public void signup(final String email, String password)
     {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -84,6 +85,7 @@ public class SignUpActivity extends AppCompatActivity{
                         else
                         {
                             mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Name").setValue(mNameView.getText().toString());
+                            mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Email").setValue(email);
                             startActivity(new Intent(SignUpActivity.this, Menu.class));
                         }
                         // ...
