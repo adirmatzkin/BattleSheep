@@ -111,7 +111,10 @@ public class LoginActivity extends AppCompatActivity{
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                signIn(mEmailView.getText().toString(), mPasswordView.getText().toString());
+                if(!mEmailView.getText().toString().equals("") && !mPasswordView.getText().toString().equals(""))
+                    signIn(mEmailView.getText().toString(), mPasswordView.getText().toString());
+                else
+                    Toast.makeText(getApplicationContext(), "Please fill all fields", Toast.LENGTH_LONG).show();
             }
         });
 
