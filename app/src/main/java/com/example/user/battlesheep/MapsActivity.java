@@ -10,6 +10,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -19,11 +20,14 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Map;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private FirebaseAuth mAuth;
@@ -88,11 +92,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         runThread();
     }
 
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        if(t != null && !t.isInterrupted())
+            t.start();
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+        if(t != null)
+            t.interrupt();
+    }
+
     private void runThread() {
-        Runnable r = new Runnable() {
+        t = new Thread (new Runnable() {
             @Override
             public void run() {
-                while (true)
+                while (!t.isInterrupted())
                 {
                     runOnUiThread(new Runnable() {
                         @Override
@@ -127,7 +147,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     mMap.clear();
                                     mMap.addMarker(new MarkerOptions().position(myLoc).title("My location"));
                                     Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
-                                    mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
+
+                                    showFriends();
                                 }
                             }
                         }
@@ -137,13 +158,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     try {
                         Thread.sleep(10000);
                     } catch (InterruptedException e) {
-                        Toast.makeText(getApplicationContext(), "Cant sleep", Toast.LENGTH_SHORT).show();
                         break;
                     }
                 }
             }
-        };
-        t = new Thread(r);
+
+            private void showFriends()
+            {
+                mFirebase.getReference().addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        DataSnapshot friends = dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends");
+                        for(DataSnapshot d : friends.getChildren())
+                        {
+                            DataSnapshot friend = dataSnapshot.child(d.getValue().toString());
+                            if(friend.hasChild("lat") && friend.hasChild("long"))
+                            {
+                                String name = friend.child("Name").getValue().toString();
+                                double lat = Double.parseDouble(friend.child("lat").getValue().toString());
+                                double longt = Double.parseDouble(friend.child("long").getValue().toString());
+
+                                LatLng myLoc = new LatLng(lat, longt);
+                                mMap.addMarker(new MarkerOptions().position(myLoc).title(name));
+                                Toast.makeText(getApplicationContext(), name + "'s" + "marker", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
         t.start();
     }
 
