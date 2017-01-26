@@ -8,33 +8,24 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.widget.TextViewCompat;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.SubMenu;
-import android.view.View;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.KeyEvent;
 import android.view.MenuItem;
-import android.widget.EditText;
+import android.view.SubMenu;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
-import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.facebook.HttpMethod;
-import com.facebook.internal.GraphUtil;
-import com.facebook.internal.ImageRequest;
 import com.facebook.login.LoginManager;
-import com.google.android.gms.maps.MapFragment;
-import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -46,9 +37,6 @@ import com.google.firebase.database.ValueEventListener;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import static com.example.user.battlesheep.R.id.rememberBox;
-import static com.example.user.battlesheep.R.id.start;
 
 public class Menu extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, android.view.Menu {
@@ -162,7 +150,7 @@ public class Menu extends AppCompatActivity
         }
         else
         {
-            navMail.setText(mAuth.getCurrentUser().getEmail());
+//            navMail.setText(mAuth.getCurrentUser().getEmail());
         }
     }
 
@@ -213,10 +201,12 @@ public class Menu extends AppCompatActivity
         } else if (id == R.id.nav_map_layout) {
             startActivity(new Intent(Menu.this, MapsActivity.class));
         } else if (id == R.id.nav_nfc_layout) {
-            fragmentManager.beginTransaction()
-                    .replace(R.id.content_frame
-                            , new NFC_Activity_Fragment())
-                    .commit();
+//            fragmentManager.beginTransaction()
+//                    .replace(R.id.content_frame
+//                            , new NFC_Activity_Fragment())
+//                    .commit();
+            startActivity(new Intent(this, NFC_Activity_Fragment.class));
+
         } else if (id == R.id.nav_share) {
             // do nothing for now..
         } else if (id == R.id.nav_logout) {
