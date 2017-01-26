@@ -17,6 +17,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -143,9 +145,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("lat").setValue(lat + "");
                                     mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("long").setValue(longt + "");
 
-                                    LatLng myLoc = new LatLng(lat, longt);
                                     mMap.clear();
-                                    mMap.addMarker(new MarkerOptions().position(myLoc).title("My location"));
+                                    mMap.setMyLocationEnabled(true);
                                     Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
 
                                     showFriends();
