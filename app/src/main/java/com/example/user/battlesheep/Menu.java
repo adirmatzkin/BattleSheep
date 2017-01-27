@@ -352,7 +352,7 @@ public class Menu extends AppCompatActivity
     }
 
     //Add a user Firebase id to a given database reference by his Facebook ID.
-    public void addUidByIDToFriends(final String id, final DatabaseReference friendsChild)
+    public void addUidByIDToFriends(final String idToAdd, final DatabaseReference friendsChild)
     {
         mDatabase.getReference().addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -363,7 +363,7 @@ public class Menu extends AppCompatActivity
                     if(d.hasChild("ID"))
                     {
                         //If the user has that ID:
-                        if(d.child("ID").getValue().toString().equals(id))
+                        if(d.child("ID").getValue().toString().equals(idToAdd))
                         {
                             boolean hasFriend = false;
                             //Check if friend is already in the friends list.
