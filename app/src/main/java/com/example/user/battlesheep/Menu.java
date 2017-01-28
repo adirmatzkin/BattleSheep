@@ -41,6 +41,8 @@ import org.json.JSONObject;
 public class Menu extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, android.view.Menu {
 
+    private static final String TAG = Menu.class.getSimpleName();
+
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
 
@@ -163,28 +165,6 @@ public class Menu extends AppCompatActivity
             super.onBackPressed();
         }
     }
-
-//    //@Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.main, menu);
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -351,33 +331,32 @@ public class Menu extends AppCompatActivity
         return AccessToken.getCurrentAccessToken() != null;
     }
 
-    //Add a user Firebase id to a given database reference by his Facebook ID.
-    public void addUidByIDToFriends(final String id, final DatabaseReference friendsChild)
+
+    //Add a user Firebase id to a given database reference by his ID.
+    public void addUidByIDToFriends(final String keyOfUserToAdd, final DatabaseReference friendsChild)
     {
+
         mDatabase.getReference().addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                //Loop to check which user has the given ID.
-                for(DataSnapshot d : dataSnapshot.getChildren())
-                {
-                    if(d.hasChild("ID"))
-                    {
-                        //If the user has that ID:
-                        if(d.child("ID").getValue().toString().equals(id))
-                        {
-                            boolean hasFriend = false;
-                            //Check if friend is already in the friends list.
-                            for(DataSnapshot ds : dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildren())
-                            {
-                                if(ds.getValue().toString().equals(d.getKey()))
-                                {
-                                    hasFriend = true;
-                                }
-                            }
-                            //Adds the friend to the list.
-                            if(!hasFriend)
-                                friendsChild.child(String.valueOf(dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildrenCount() + 1)).setValue(d.getKey());
+
+                //If the user has that ID:
+                if (!mAuth.getCurrentUser().getUid().equals(keyOfUserToAdd)) { // to make sure we don't add ourselves as a friend...
+
+                    //Check if the friend is already in the friends list.
+                    boolean hasFriend = false;
+
+                    for (DataSnapshot aFriend : dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildren()) {
+                        if (aFriend.getValue().toString().equals(keyOfUserToAdd)) {
+                            hasFriend = true; // he is already a friend of mine
+                            Toast.makeText(Menu.this, "This user is already your friend", Toast.LENGTH_SHORT).show();
                         }
+                    }
+
+                    //Add the friend if its ok.
+                    if (!hasFriend) {
+                        friendsChild.child(String.valueOf(dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildrenCount() + 1)).setValue(keyOfUserToAdd);
+                        Toast.makeText(Menu.this, "Successfully added a friend!", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
