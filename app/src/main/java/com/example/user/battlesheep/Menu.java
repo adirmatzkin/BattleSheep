@@ -69,6 +69,7 @@ public class Menu extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
 
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,7 +153,7 @@ public class Menu extends AppCompatActivity
         }
         else
         {
-//            navMail.setText(mAuth.getCurrentUser().getEmail());
+
         }
     }
 
@@ -349,14 +350,12 @@ public class Menu extends AppCompatActivity
                     for (DataSnapshot aFriend : dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildren()) {
                         if (aFriend.getValue().toString().equals(keyOfUserToAdd)) {
                             hasFriend = true; // he is already a friend of mine
-                            Toast.makeText(Menu.this, "This user is already your friend", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     //Add the friend if its ok.
                     if (!hasFriend) {
                         friendsChild.child(String.valueOf(dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildrenCount() + 1)).setValue(keyOfUserToAdd);
-                        Toast.makeText(Menu.this, "Successfully added a friend!", Toast.LENGTH_SHORT).show();
                     }
                 }
             }

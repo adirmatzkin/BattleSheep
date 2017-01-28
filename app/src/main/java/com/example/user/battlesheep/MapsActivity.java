@@ -2,12 +2,14 @@ package com.example.user.battlesheep;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
@@ -25,12 +27,17 @@ import com.google.firebase.database.ValueEventListener;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
+
+    private static final String TAG = MapsActivity.class.getSimpleName();
+
     private GoogleMap mMap;
     private FirebaseAuth mAuth;
     private FirebaseDatabase mFirebase;
     private LocationManager locationManager;
 
     private Thread t;
+
+
 
 
     @Override
@@ -41,6 +48,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         ActivityCompat.requestPermissions(MapsActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
 
 
+        // check if network and location are available
+        checkLocAvailability();
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -75,6 +84,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
+
+
+    // makes sure internet connection and location services are available
+    public void checkLocAvailability(){
+
+        LocationManager lmLoc = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        boolean gps_enabled = lmLoc.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        if (!gps_enabled){
+            //Toast.makeText(this, "You need to turn on location services!", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            while (!gps_enabled) {
+                // wait for user to turn location services on
+                gps_enabled = lmLoc.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            }
+        }
+    }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -107,11 +134,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void runThread() {
+
         t = new Thread (new Runnable() {
             @Override
             public void run() {
                 while (!t.isInterrupted())
                 {
+                    checkLocAvailability();
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -135,6 +164,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     return;
                                 }
                                 if(locationManager.getAllProviders().size() > 0 && locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)) != null) {
+
+
                                     double lat = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLatitude();
                                     double longt = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLongitude();
 
@@ -146,6 +177,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
 
                                     showFriends();
+
                                 }
                             }
                         }
@@ -154,6 +186,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     try {
                         Thread.sleep(10000);
+                        // check if network and location are available
+                        checkLocAvailability();
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -172,12 +206,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             if(friend.hasChild("lat") && friend.hasChild("long"))
                             {
                                 String name = friend.child("Name").getValue().toString();
+
                                 double lat = Double.parseDouble(friend.child("lat").getValue().toString());
                                 double longt = Double.parseDouble(friend.child("long").getValue().toString());
 
                                 LatLng myLoc = new LatLng(lat, longt);
                                 mMap.addMarker(new MarkerOptions().position(myLoc).title(name));
-                                Toast.makeText(getApplicationContext(), name + "'s" + "marker", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), name + "'s" + " marker", Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
@@ -203,6 +238,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
+
                 } else {
 
                     // permission denied, boo! Disable the
