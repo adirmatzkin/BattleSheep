@@ -32,11 +32,11 @@ public class NFC_Activity_Fragment extends Activity implements
     TextView textInfo;
     EditText textOut;
     FirebaseAuth mAuth;
-
     NfcAdapter nfcAdapter;
-
     private FirebaseDatabase db;
     private static final String TAG = NFC_Activity_Fragment.class.getSimpleName();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +76,6 @@ public class NFC_Activity_Fragment extends Activity implements
     }
 
 
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -95,13 +94,14 @@ public class NFC_Activity_Fragment extends Activity implements
             // add to friends
             addUidByIDToFriends(inMsg, db.getReference().child(mAuth.getCurrentUser().getUid()).child("Friends"));
             // show some info on screen
-            textInfo.setText("Got \""+inMsg+"\" from your friends device\nNow send him yours (\""+mAuth.getCurrentUser().getUid().toString()+"\")");
+            textInfo.setText("Got \""+inMsg+"\" from your friends' device\nNow send him yours (\""+mAuth.getCurrentUser().getUid().toString()+"\")");
 
 
             // need to change this so that the id's will be switched not as 2 separate beam action, but as one beam & respond.
 
         }
     }
+
 
 
 
@@ -143,39 +143,31 @@ public class NFC_Activity_Fragment extends Activity implements
         return ndefMessageOut;
     }
 
-
-
-
-    //Add a user Firebase id to a given database reference by his Facebook ID.
-    public void addUidByIDToFriends(final String idToAdd, final DatabaseReference friendsChild)
+    //Add a user Firebase id to a given database reference by his ID.
+    public void addUidByIDToFriends(final String keyOfUserToAdd, final DatabaseReference friendsChild)
     {
+
         db.getReference().addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                //Loop to check which user has the given ID.
-                for(DataSnapshot d : dataSnapshot.getChildren())
-                {
-                    if(d.hasChild("ID"))
-                    {
 
-                        //If the user has that ID:
-                        if(d.child("ID").getValue().toString().equals(idToAdd))
-                        {
-                            Log.d(TAG, "got hereeeeeeeeeeeeeeeeeeeeeee");
+                //If the user has that ID:
+                if (!mAuth.getCurrentUser().getUid().equals(keyOfUserToAdd)) { // to make sure we don't add ourselves as a friend...
 
-                            boolean hasFriend = false;
-                            //Check if friend is already in the friends list.
-                            for(DataSnapshot ds : dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildren())
-                            {
-                                if(ds.getValue().toString().equals(d.getKey()))
-                                {
-                                    hasFriend = true;
-                                }
-                            }
-                            //Adds the friend to the list.
-                            if(!hasFriend)
-                                friendsChild.child(String.valueOf(dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildrenCount() + 1)).setValue(d.getKey());
+                    //Check if the friend is already in the friends list.
+                    boolean hasFriend = false;
+
+                    for (DataSnapshot aFriend : dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildren()) {
+                        if (aFriend.getValue().toString().equals(keyOfUserToAdd)) {
+                            hasFriend = true; // he is already a friend of mine
+                            Toast.makeText(NFC_Activity_Fragment.this, "This user is already your friend", Toast.LENGTH_SHORT).show();
                         }
+                    }
+
+                    //Add the friend if its ok.
+                    if (!hasFriend) {
+                        friendsChild.child(String.valueOf(dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends").getChildrenCount() + 1)).setValue(keyOfUserToAdd);
+                        Toast.makeText(NFC_Activity_Fragment.this, "Successfully added a friend!", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -186,10 +178,6 @@ public class NFC_Activity_Fragment extends Activity implements
             }
         });
     }
-
-
-
-
 
 
 }
