@@ -15,6 +15,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -23,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
+import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
@@ -58,6 +60,7 @@ public class Menu extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_main);
 
         mDatabase = FirebaseDatabase.getInstance();
@@ -133,6 +136,7 @@ public class Menu extends AppCompatActivity
                                     JSONArray friendsList = response.getJSONObject().getJSONObject("friends").getJSONArray("data");
                                     for(int i = 0; i < friendsList.length(); i++)
                                     {
+                                        Log.d(TAG, "=========="+friendsList.getJSONObject(i).toString(4));
                                         //Adds the uid of the friend to the friends list by his Facebook id.
                                         addUidByIDToFriends(friendsList.getJSONObject(i).getString("id"), mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Friends"));
                                     }
@@ -180,7 +184,9 @@ public class Menu extends AppCompatActivity
                             , new WhosAroundFragment())
                     .commit();
         } else if (id == R.id.nav_map_layout) {
+
             startActivity(new Intent(Menu.this, MapsActivity.class));
+            Log.d(TAG, "got here");
         } else if (id == R.id.nav_nfc_layout) {
 //            fragmentManager.beginTransaction()
 //                    .replace(R.id.content_frame
