@@ -9,6 +9,7 @@ import android.nfc.NfcEvent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.preference.PreferenceFragment;
 import android.provider.Settings;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
@@ -178,6 +179,4 @@ public class NFC_Activity_Fragment extends Activity implements
             }
         });
     }
-
-
 }
