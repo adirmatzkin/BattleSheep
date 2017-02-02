@@ -61,7 +61,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     static MarkerOptions mo = new MarkerOptions();
     private Thread t;
-    private Thread gooThread;
 
 
     @Override
@@ -159,48 +158,44 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void run() {
                 while (!t.isInterrupted()) {
                     checkLocAvailability();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                                Criteria c = new Criteria();
-                                c.setAccuracy(Criteria.ACCURACY_LOW);
-                                c.setAltitudeRequired(false);
-                                c.setBearingRequired(false);
-                                c.setCostAllowed(false);
-                                c.setPowerRequirement(Criteria.NO_REQUIREMENT);
-                                c.setSpeedRequired(false);
+                    if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+//                                Criteria c = new Criteria();
+//                                c.setAccuracy(Criteria.ACCURACY_LOW);
+//                                c.setAltitudeRequired(false);
+//                                c.setBearingRequired(false);
+//                                c.setCostAllowed(false);
+//                                c.setPowerRequirement(Criteria.NO_REQUIREMENT);
+//                                c.setSpeedRequired(false);
 
-                                if (ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                                    // TODO: Consider calling
-                                    //    ActivityCompat#requestPermissions
-                                    // here to request the missing permissions, and then overriding
-                                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                    //                                          int[] grantResults)
-                                    // to handle the case where the user grants the permission. See the documentation
-                                    // for ActivityCompat#requestPermissions for more details.
-                                    return;
-                                }
-                                if (locationManager.getAllProviders().size() > 0 && locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)) != null) {
-
-
-                                    double lat = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLatitude();
-                                    double longt = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLongitude();
-
-                                    mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("lat").setValue(lat + "");
-                                    mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("long").setValue(longt + "");
-
-                                    mMap.clear();
-                                    mMap.setMyLocationEnabled(true);
-                                    Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
-
-                                    showFriends();
-
-                                }
-                            }
+                        if (ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            // here to request the missing permissions, and then overriding
+                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                            //                                          int[] grantResults)
+                            // to handle the case where the user grants the permission. See the documentation
+                            // for ActivityCompat#requestPermissions for more details.
+                            return;
                         }
+                        if (locationManager.getAllProviders().size() > 0 && locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)) != null) {
 
-                    });
+
+                            double lat = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLatitude();
+                            double longt = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLongitude();
+
+                            mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("lat").setValue(lat + "");
+                            mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("long").setValue(longt + "");
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
+
+                    showFriends();
 
                     try {
                         Thread.sleep(10000);
@@ -235,7 +230,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             e.printStackTrace();
                         }
                         mo.title(friend.child("Name").getValue().toString());
-                        mMap.addMarker(mo);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mMap.addMarker(mo);
+                                if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                    // TODO: Consider calling
+                                    //    ActivityCompat#requestPermissions
+                                    // here to request the missing permissions, and then overriding
+                                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                    //                                          int[] grantResults)
+                                    // to handle the case where the user grants the permission. See the documentation
+                                    // for ActivityCompat#requestPermissions for more details.
+                                    return;
+                                }
+                                mMap.setMyLocationEnabled(true);
+                            }
+                        });
                     }
                 }
             }
