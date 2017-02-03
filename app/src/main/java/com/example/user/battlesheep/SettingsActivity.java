@@ -25,4 +25,12 @@ public class SettingsActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(Menu.mAuth.getCurrentUser() == null)
+            return;
+        Menu.mDatabase.getReference().child(Menu.mAuth.getCurrentUser().getUid()).child("Active").setValue("False");
+    }
 }

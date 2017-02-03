@@ -23,6 +23,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import static com.example.user.battlesheep.Menu.mDatabase;
+
 /**
  * Created by adirmatzkin on 24/01/2017.
  */
@@ -178,5 +180,13 @@ public class NFC_Activity_Fragment extends Activity implements
 
             }
         });
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(mAuth.getCurrentUser() == null)
+            return;
+        Menu.mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("False");
     }
 }

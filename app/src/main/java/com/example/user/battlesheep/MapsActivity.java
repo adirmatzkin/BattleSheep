@@ -134,6 +134,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
         runThread();
     }
 
@@ -149,6 +160,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onPause();
         if (t != null)
             t.interrupt();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(mAuth.getCurrentUser() == null)
+            return;
+        mFirebase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("False");
     }
 
     private void runThread() {
@@ -189,6 +208,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
+                                    mMap.clear();
                                     Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
                                 }
                             });
@@ -217,7 +237,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 DataSnapshot friends = dataSnapshot.child(mAuth.getCurrentUser().getUid()).child("Friends");
                 for (DataSnapshot d : friends.getChildren()) {
                     DataSnapshot friend = dataSnapshot.child(d.getValue().toString());
-                    if (friend.hasChild("lat") && friend.hasChild("long")) {
+
+                    if(!friend.hasChild("Active"))
+                        return;
+
+                    if (friend.hasChild("lat") && friend.hasChild("long") && friend.child("Active").getValue().toString().equals("True")) {
                         final double lat = Double.parseDouble(friend.child("lat").getValue().toString());
                         final double longt = Double.parseDouble(friend.child("long").getValue().toString());
 
@@ -234,17 +258,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             @Override
                             public void run() {
                                 mMap.addMarker(mo);
-                                if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                                    // TODO: Consider calling
-                                    //    ActivityCompat#requestPermissions
-                                    // here to request the missing permissions, and then overriding
-                                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                    //                                          int[] grantResults)
-                                    // to handle the case where the user grants the permission. See the documentation
-                                    // for ActivityCompat#requestPermissions for more details.
-                                    return;
-                                }
-                                mMap.setMyLocationEnabled(true);
                             }
                         });
                     }

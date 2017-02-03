@@ -63,10 +63,10 @@ public class Menu extends AppCompatActivity
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
 
-    private FirebaseAuth mAuth;
+    static FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
 
-    private FirebaseDatabase mDatabase;
+    static FirebaseDatabase mDatabase;
 
     private TextView navMail;
 
@@ -108,6 +108,8 @@ public class Menu extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("True");
 
         ////////////////////////////////////////////////////// Set name in database
         mAuthListener = new FirebaseAuth.AuthStateListener() {
@@ -247,11 +249,20 @@ public class Menu extends AppCompatActivity
             }
             mAuth.signOut();
             startActivity(new Intent(Menu.this, LoginActivity.class));
+            finish();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(mAuth.getCurrentUser() == null)
+            return;
+        mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("False");
     }
 
     @Override
@@ -388,6 +399,11 @@ public class Menu extends AppCompatActivity
             public void onDataChange(DataSnapshot dataSnapshot) {
 
                 //If the user has that ID:
+                if(mAuth.getCurrentUser() == null)
+                {
+                    return;
+                }
+
                 if (!mAuth.getCurrentUser().getUid().equals(keyOfUserToAdd)) { // to make sure we don't add ourselves as a friend...
 
                     //Check if the friend is already in the friends list.

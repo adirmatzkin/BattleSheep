@@ -100,6 +100,7 @@ public class LoginActivity extends AppCompatActivity{
                 if (user != null) {
                     // User is signed in
                     Toast.makeText(getApplicationContext(), "onAuthStateChanged:signed_in:" + user.getUid(), Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(LoginActivity.this, Menu.class));
                 } else {
                     // User is signed out
                     System.out.print("onAuthStateChanged:signed_out");
@@ -127,13 +128,12 @@ public class LoginActivity extends AppCompatActivity{
 
 /// Initialize Facebook Login button
         mCallbackManager = CallbackManager.Factory.create();
-        final LoginButton loginButton = (LoginButton) findViewById(R.id.button_facebook_login);
+        LoginButton loginButton = (LoginButton) findViewById(R.id.button_facebook_login);
         loginButton.setReadPermissions("email", "public_profile", "user_friends");
         loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 handleFacebookAccessToken(loginResult.getAccessToken());
-                startActivity(new Intent(LoginActivity.this, Menu.class));
             }
 
             @Override
@@ -245,6 +245,9 @@ public class LoginActivity extends AppCompatActivity{
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
+        if(mAuth.getCurrentUser() == null)
+            return;
+        mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("True");
     }
 
     public static boolean isFacebookLoggedIn(){
