@@ -1,14 +1,10 @@
 package com.example.user.battlesheep;
 
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -19,7 +15,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -46,34 +41,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
 
-import static com.example.user.battlesheep.R.id.rememberBox;
-import static com.example.user.battlesheep.R.id.start;
+import static com.example.user.battlesheep.LoginActivity.mAuth;
 
 public class Menu extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, android.view.Menu {
 
-    private static final String TAG = Menu.class.getSimpleName();
-
-    private SharedPreferences sharedPref;
-    private SharedPreferences.Editor editor;
-
-    static FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
-
+    static SharedPreferences sharedPref;
+    static SharedPreferences.Editor editor;
     static FirebaseDatabase mDatabase;
 
     private TextView navMail;
-
-    String name;
-
-    static Bitmap bitmap;
-
+    private FirebaseAuth.AuthStateListener mAuthListener;
+    private String name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,17 +69,10 @@ public class Menu extends AppCompatActivity
         editor = sharedPref.edit();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        //setSupportActionBar(toolbar);
+        setSupportActionBar(toolbar);
         makeActionOverflowMenuShown();
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Should do something...?", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        setFab();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -111,7 +85,14 @@ public class Menu extends AppCompatActivity
 
         mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("True");
 
-        ////////////////////////////////////////////////////// Set name in database
+        if(isFacebookLoggedIn())
+        {
+            getFacebookInformation();
+        }
+    }
+
+    private void setAuthListener()
+    {
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
@@ -125,60 +106,62 @@ public class Menu extends AppCompatActivity
                 }
             }
         };
+    }
 
-        if(mAuth.getCurrentUser() == null)// For some FUCKING reason thats the only way to fix the authentication.
-        {
-            startActivity(new Intent(Menu.this, Menu.class));
-        }
+    private void getFacebookInformation()
+    {
+        name = "";
 
-        if(isFacebookLoggedIn())
-        {
-            name = "";
-
-            GraphRequest request = GraphRequest.newMeRequest(
-                    AccessToken.getCurrentAccessToken(),
-                    new GraphRequest.GraphJSONObjectCallback() {
-                        @Override
-                        public void onCompleted(
-                                JSONObject object,
-                                GraphResponse response) {
-                            // Application code
-                            try {
-                                if(mAuth.getCurrentUser() != null)
+        GraphRequest request = GraphRequest.newMeRequest(
+                AccessToken.getCurrentAccessToken(),
+                new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(
+                            JSONObject object,
+                            GraphResponse response) {
+                        // Application code
+                        try {
+                            if(mAuth.getCurrentUser() != null)
+                            {
+                                //Sets the user's Facebook's id
+                                mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("ID").setValue(object.getString("id"));
+                                //Gets the user's name and sets it in the nav menu
+                                String email = object.getString("email");
+                                navMail = (TextView) findViewById(R.id.navMail);
+                                navMail.setText(email);
+                                //Gets the friends array
+                                JSONArray friendsList = response.getJSONObject().getJSONObject("friends").getJSONArray("data");
+                                for(int i = 0; i < friendsList.length(); i++)
                                 {
-                                    //Sets the user's Facebook's id
-                                    mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("ID").setValue(object.getString("id"));
-                                    //Gets the user's name and sets it in the nav menu
-                                    String email = object.getString("email");
-                                    navMail = (TextView) findViewById(R.id.navMail);
-                                    navMail.setText(email);
-                                    //Gets the friends array
-                                    JSONArray friendsList = response.getJSONObject().getJSONObject("friends").getJSONArray("data");
-                                    for(int i = 0; i < friendsList.length(); i++)
-                                    {
-                                        Log.d(TAG, "=========="+friendsList.getJSONObject(i).toString(4));
-                                        //Adds the uid of the friend to the friends list by his Facebook id.
-                                        addUidByIDToFriends(friendsList.getJSONObject(i).getString("id"), mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Friends"));
-                                    }
-                                    //Sets the user's name in the database.
-                                    name = response.getJSONObject().getString("name");
-                                    mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Name").setValue(name);
+                                    //Adds the uid of the friend to the friends list by his Facebook id.
+                                    addUidByIDToFriends(friendsList.getJSONObject(i).getString("id"), mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Friends"));
                                 }
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                                //Sets the user's name in the database.
+                                name = response.getJSONObject().getString("name");
+                                mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Name").setValue(name);
                             }
-                        }
-                    });
-            Bundle parameters = new Bundle();
-            parameters.putString("fields", "id,name,email, friends");
-            request.setParameters(parameters);
-            request.executeAsync();
-        }
-        else
-        {
 
-        }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "id,name,email, friends");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
+    private void setFab()
+    {
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Should do something...?", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
     }
 
     @Override
@@ -228,7 +211,6 @@ public class Menu extends AppCompatActivity
         } else if (id == R.id.nav_map_layout) {
 
             startActivity(new Intent(Menu.this, MapsActivity.class));
-            Log.d(TAG, "got here");
         } else if (id == R.id.nav_nfc_layout) {
 //            fragmentManager.beginTransaction()
 //                    .replace(R.id.content_frame
@@ -462,7 +444,6 @@ public class Menu extends AppCompatActivity
                 menuKeyField.setBoolean(config, false);
             }
         } catch (Exception e) {
-            Log.d(TAG, e.getLocalizedMessage());
         }
     }
 

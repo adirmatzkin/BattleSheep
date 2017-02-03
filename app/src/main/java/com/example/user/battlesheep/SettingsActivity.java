@@ -5,6 +5,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import static com.example.user.battlesheep.LoginActivity.mAuth;
+import static com.example.user.battlesheep.Menu.mDatabase;
+
 public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,8 +32,8 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     public void onStop() {
         super.onStop();
-        if(Menu.mAuth.getCurrentUser() == null)
+        if(mAuth.getCurrentUser() == null)
             return;
-        Menu.mDatabase.getReference().child(Menu.mAuth.getCurrentUser().getUid()).child("Active").setValue("False");
+        mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("False");
     }
 }

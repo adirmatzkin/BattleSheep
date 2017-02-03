@@ -44,6 +44,8 @@ import org.json.JSONObject;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import static com.example.user.battlesheep.Menu.mDatabase;
+
 /**
  * A login screen that offers login via email/password.
  */
@@ -51,19 +53,14 @@ public class LoginActivity extends AppCompatActivity{
 
     private EditText mPasswordView;
     private EditText mEmailView;
-
     private Button signupBtn;
-
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
-    
     private CheckBox rememberBox;
-
-    private FirebaseDatabase mDatabase;
-
-    private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private CallbackManager mCallbackManager;
+
+    static FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,31 +90,10 @@ public class LoginActivity extends AppCompatActivity{
         });
 
         mAuth = FirebaseAuth.getInstance();
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // User is signed in
-                    Toast.makeText(getApplicationContext(), "onAuthStateChanged:signed_in:" + user.getUid(), Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(LoginActivity.this, Menu.class));
-                } else {
-                    // User is signed out
-                    System.out.print("onAuthStateChanged:signed_out");
-                }
-            }
-        };
+        setAuthListener();
 
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
-        mEmailSignInButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!mEmailView.getText().toString().equals("") && !mPasswordView.getText().toString().equals(""))
-                    signIn(mEmailView.getText().toString(), mPasswordView.getText().toString());
-                else
-                    Toast.makeText(getApplicationContext(), "Please fill all fields", Toast.LENGTH_LONG).show();
-            }
-        });
+        setEmailButton(mEmailSignInButton);
 
         if(!(sharedPref.getString("Email", "").equals("") && sharedPref.getString("Password", "").equals("")) && rememberBox.isChecked())
         {
@@ -126,7 +102,17 @@ public class LoginActivity extends AppCompatActivity{
             signIn(sharedPref.getString("Email", ""), sharedPref.getString("Password", ""));
         }
 
-/// Initialize Facebook Login button
+        /// Initialize Facebook Login button
+        initFacebookLoginButton();
+
+        if(isFacebookLoggedIn())
+        {
+            startActivity(new Intent(LoginActivity.this, Menu.class));
+        }
+    }
+
+    private void initFacebookLoginButton()
+    {
         mCallbackManager = CallbackManager.Factory.create();
         LoginButton loginButton = (LoginButton) findViewById(R.id.button_facebook_login);
         loginButton.setReadPermissions("email", "public_profile", "user_friends");
@@ -146,12 +132,29 @@ public class LoginActivity extends AppCompatActivity{
                 // ...
             }
         });
-
-        if(isFacebookLoggedIn())
-        {
-            startActivity(new Intent(LoginActivity.this, Menu.class));
-        }
     }
+
+    private void resetFieldsPreferences()
+    {
+        editor.putString("Email", "");
+        editor.putString("Password", "");
+        editor.putBoolean("Remember", rememberBox.isChecked());
+        editor.commit();
+    }
+
+    private void setEmailButton(Button btn)
+    {
+        btn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!mEmailView.getText().toString().equals("") && !mPasswordView.getText().toString().equals(""))
+                    signIn(mEmailView.getText().toString(), mPasswordView.getText().toString());
+                else
+                    Toast.makeText(getApplicationContext(), "Please fill all fields", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -171,11 +174,27 @@ public class LoginActivity extends AppCompatActivity{
                 md.update(signature.toByteArray());
                 Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
             }
-        } catch (PackageManager.NameNotFoundException e) {
-
-        } catch (NoSuchAlgorithmException e) {
+        } catch (PackageManager.NameNotFoundException | NoSuchAlgorithmException ignored) {
 
         }
+    }
+
+    private void setAuthListener()
+    {
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // User is signed in
+                    Toast.makeText(getApplicationContext(), "onAuthStateChanged:signed_in:" + user.getUid(), Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(LoginActivity.this, Menu.class));
+                } else {
+                    // User is signed out
+                    System.out.print("onAuthStateChanged:signed_out");
+                }
+            }
+        };
     }
 
     public void signIn(final String email, final String password)
@@ -204,16 +223,14 @@ public class LoginActivity extends AppCompatActivity{
                             }
                             else
                             {
-                                editor.putString("Email", "");
-                                editor.putString("Password", "");
-                                editor.putBoolean("Remember", rememberBox.isChecked());
-                                editor.commit();
+                                resetFieldsPreferences();
                             }
                             startActivity(new Intent(LoginActivity.this, Menu.class));
                         }
                     }
                 });
     }
+
     private void handleFacebookAccessToken(AccessToken token) {
 
         AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
