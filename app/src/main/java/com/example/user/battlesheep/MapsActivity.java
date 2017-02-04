@@ -11,11 +11,16 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -40,6 +45,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     static Bitmap profilePic;
     static double lat;
     static double longt;
+    static float maxZoom = 16.5f;
+    static float circleRadius = 200;
     static MarkerOptions mo = new MarkerOptions();
 
 
@@ -100,7 +107,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
+
+        lat = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLatitude();
+        longt = locationManager.getLastKnownLocation(locationManager.getAllProviders().get(0)).getLongitude();
+
         mMap.setMyLocationEnabled(true);
+        mMap.setMinZoomPreference(maxZoom);
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(new LatLng(lat, longt), 16.8f)));
         runThread();
     }
 
@@ -176,6 +189,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void run() {
                 mMap.clear();
+                Log.d("Circle: ", "ADDED");
+                mMap.addCircle(new CircleOptions()
+                        .clickable(false)
+                        .center(new LatLng(lat, longt))
+                        .radius(circleRadius)
+                        .strokeWidth(2)
+                        .fillColor(0x1200BBF8)
+                        .strokeColor(0xFF00AAFF));
                 Toast.makeText(getApplicationContext(), "Refreshed marker", Toast.LENGTH_SHORT).show();
             }
         });
@@ -185,6 +206,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("lat").setValue(lat + "");
         mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("long").setValue(longt + "");
+
+//        mMap.getMyLocation().getLatitude();
+//        mMap.getMyLocation().getLongitude();
     }
 
 
