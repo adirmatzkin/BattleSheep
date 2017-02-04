@@ -26,8 +26,10 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 import static com.example.user.battlesheep.LoginActivity.mAuth;
 import static com.example.user.battlesheep.Menu.mDatabase;
+import static com.example.user.battlesheep.Menu.stopFunction;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -117,11 +119,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onStop() {
+    public void onBackPressed(){
+        Intent intent = new Intent(this, Menu.class).setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onDestroy()
+    {
         super.onStop();
-        if(mAuth.getCurrentUser() == null)
-            return;
-        mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("False");
+        stopFunction();
     }
 
     private void runThread() {

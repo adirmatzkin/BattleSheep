@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -43,6 +44,7 @@ import org.json.JSONObject;
 
 import java.lang.reflect.Field;
 
+import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 import static com.example.user.battlesheep.LoginActivity.mAuth;
 
 public class Menu extends AppCompatActivity
@@ -51,10 +53,13 @@ public class Menu extends AppCompatActivity
     static SharedPreferences sharedPref;
     static SharedPreferences.Editor editor;
     static FirebaseDatabase mDatabase;
+    static DatabaseReference myData;
 
     private TextView navMail;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private String name;
+
+    private static Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,8 +67,11 @@ public class Menu extends AppCompatActivity
         FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_main);
 
+        context = getApplicationContext();
+
         mDatabase = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
+        myData = mDatabase.getReference().child(mAuth.getCurrentUser().getUid());
 
         sharedPref = getApplicationContext().getSharedPreferences("com.example.myapp.PREFERENCE_FILE_KEY", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
@@ -89,23 +97,8 @@ public class Menu extends AppCompatActivity
         {
             getFacebookInformation();
         }
-    }
 
-    private void setAuthListener()
-    {
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // User is signed in
-                    Toast.makeText(getApplicationContext(), "onAuthStateChanged:signed_in:" + user.getUid(), Toast.LENGTH_SHORT).show();
-                } else {
-                    // User is signed out
-                    System.out.print("onAuthStateChanged:signed_out");
-                }
-            }
-        };
+        setActive();
     }
 
     private void getFacebookInformation()
@@ -210,13 +203,13 @@ public class Menu extends AppCompatActivity
                     .commit();
         } else if (id == R.id.nav_map_layout) {
 
-            startActivity(new Intent(Menu.this, MapsActivity.class));
+            startActivity(new Intent(Menu.this, MapsActivity.class).setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT));
         } else if (id == R.id.nav_nfc_layout) {
 //            fragmentManager.beginTransaction()
 //                    .replace(R.id.content_frame
 //                            , new NFC_Activity_Fragment())
 //                    .commit();
-            startActivity(new Intent(this, NFC_Activity_Fragment.class));
+            startActivity(new Intent(this, NFC_Activity_Fragment.class).setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT));
 
         } else if (id == R.id.nav_share) {
             // do nothing for now..
@@ -230,8 +223,7 @@ public class Menu extends AppCompatActivity
                 LoginManager.getInstance().logOut();
             }
             mAuth.signOut();
-            startActivity(new Intent(Menu.this, LoginActivity.class));
-            finish();
+            startActivity(new Intent(Menu.this, LoginActivity.class).setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -240,11 +232,33 @@ public class Menu extends AppCompatActivity
     }
 
     @Override
-    public void onStop() {
+    protected void onResume() {
+        super.onResume();
+        setActive();
+    }
+
+    @Override
+    public void onDestroy()
+    {
         super.onStop();
-        if(mAuth.getCurrentUser() == null)
-            return;
-        mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("False");
+        stopFunction();
+    }
+
+    public static void stopFunction()
+    {
+        myData.child("Active").setValue("False");
+    }
+
+    public static void setActive()
+    {
+        if(PreferenceManager.getDefaultSharedPreferences(context).getBoolean(SettingsActivity.KEY_PREF_SHOW_LOCATION, true))
+        {
+            myData.child("Active").setValue("True");
+        }
+        else
+        {
+            myData.child("Active").setValue("False");
+        }
     }
 
     @Override
@@ -425,7 +439,7 @@ public class Menu extends AppCompatActivity
         {
             case R.id.action_settings:
             {
-                Intent intent = new Intent(this, SettingsActivity.class);
+                Intent intent = new Intent(this, SettingsActivity.class).setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
                 startActivity(intent);
                 return true;
             }

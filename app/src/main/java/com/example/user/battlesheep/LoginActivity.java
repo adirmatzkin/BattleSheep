@@ -264,7 +264,6 @@ public class LoginActivity extends AppCompatActivity{
         }
         if(mAuth.getCurrentUser() == null)
             return;
-        mDatabase.getReference().child(mAuth.getCurrentUser().getUid()).child("Active").setValue("True");
     }
 
     public static boolean isFacebookLoggedIn(){
